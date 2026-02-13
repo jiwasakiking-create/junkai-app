@@ -4,9 +4,10 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { slackId, memberName, teamName, callerName, reason } = body
 
-  // さっきメモした Slack の Webhook URL をここに貼ってください
-  const WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-
+const WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
+if (!WEBHOOK_URL) {
+  return NextResponse.json({ ok: false, message: 'Webhook URL not set' }, { status: 500 })
+}
   const message = {
     text: `<@${slackId}> さんに呼び出しが届いています！`,
     attachments: [{
