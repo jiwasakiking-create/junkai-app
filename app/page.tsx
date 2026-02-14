@@ -2,7 +2,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase' // パスはご自身の環境に合わせて調整してください
+// 修正前: import { createClient } from '@/lib/supabase'
+// 修正後:
+import { createClient } from '../lib/supabase'
 
 export default function PatrolPage() {
   const [selectedTeam, setSelectedTeam] = useState('A')
