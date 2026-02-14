@@ -45,8 +45,9 @@ export default function PatrolDashboard() {
   setMemberStatuses(prev => ({ ...prev, [name]: newStatus }))
 }
 
-  // Slackへの呼び出し送信
+  // Slackへの呼び出し送信 ＋ ステータスを自動で「対応不可」にする
   const handleCallSubmit = async () => {
+    // 1. Slackへ通知を送る
     const response = await fetch('/api/slack', {
       method: 'POST',
       body: JSON.stringify({ 
@@ -56,9 +57,42 @@ export default function PatrolDashboard() {
         content: callContent
       }),
     })
-    if (response.ok) alert(`${selectedTeam}チームの呼び出しを送信しました！`)
-  }
 
+    if (response.ok) {
+      // 2. データベース（Supabase）のステータスを「対応不可」に更新する
+      const supabase = createClient()
+      
+      if (whoToCall === '全員') {
+        // 「全員」が呼ばれた場合は、全メンバーを更新
+        const { error } = await supabase
+          .from('patrol_members') //
+          .update({ status: '対応不可' })
+          .in('name', MEMBERS.map(m => m.name))
+        
+        if (!error) {
+          // 画面上のスイッチ表示も一括で「対応不可(false)」にする
+          const updatedStatuses = { ...memberStatuses }
+          MEMBERS.forEach(m => { updatedStatuses[m.name] = false })
+          setMemberStatuses(updatedStatuses)
+        }
+      } else {
+        // 特定の個人が呼ばれた場合は、その人だけ更新
+        const { error } = await supabase
+          .from('patrol_members')
+          .update({ status: '対応不可' })
+          .eq('name', whoToCall)
+
+        if (!error) {
+          // 画面上のスイッチ表示も「対応不可(false)」にする
+          setMemberStatuses(prev => ({ ...prev, [whoToCall]: false }))
+        }
+      }
+
+      alert(`${whoToCall} への呼び出しとステータス更新を完了しました！`)
+    } else {
+      alert('Slackへの送信に失敗しました')
+    }
+  }
   return (
     <div className="min-h-screen bg-[#FFF5E9] p-4 font-sans text-[#4A4A4A]">
       
