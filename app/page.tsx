@@ -33,8 +33,8 @@ export default function PatrolDashboard() {
     const statusText = newStatus ? '対応可能' : '対応不可'
     
     const { error } = await supabase
-      .from('members')
-      .update({ status: statusText })
+  .from('patrol_members') // ← スクリーンショットの名前に合わせる
+  .update({ status: statusText })
       .eq('name', name)
 
     if (error) {
