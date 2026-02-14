@@ -4,17 +4,30 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '../lib/supabase'
 
+// メンバー情報の定義
+const MEMBERS = [
+  { id: 1, name: '橋本真旺' },
+  { id: 2, name: '岸遥杜' },
+  { id: 3, name: '高野諭' },
+  { id: 4, name: '岩﨑丈一郎' }
+]
+
 export default function PatrolDashboard() {
+  const [memberStatuses, setMemberStatuses] = useState<{ [key: string]: boolean }>({
+    '橋本真旺': true,
+    '岸遥杜': true,
+    '高野諭': true,
+    '岩﨑丈一郎': true
+  })
   const [selectedTeam, setSelectedTeam] = useState('A')
   const [whoToCall, setWhoToCall] = useState('全員')
   const [submitter, setSubmitter] = useState('')
   const [callContent, setCallContent] = useState('')
-  const [myStatus, setMyStatus] = useState(true) // true: 対応可能, false: 対応不可
 
-  // 自分のステータス（対応可能/不可）を切り替える関数
-  const handleStatusToggle = async () => {
-    const newStatus = !myStatus
-    setMyStatus(newStatus)
+  // ステータスを切り替える関数（全員分対応）
+  const handleStatusToggle = async (name: string) => {
+    const newStatus = !memberStatuses[name]
+    setMemberStatuses(prev => ({ ...prev, [name]: newStatus }))
     
     const supabase = createClient()
     const statusText = newStatus ? '対応可能' : '対応不可'
@@ -22,9 +35,13 @@ export default function PatrolDashboard() {
     const { error } = await supabase
       .from('members')
       .update({ status: statusText })
-      .eq('name', '岩﨑丈一郎') //
+      .eq('name', name)
 
-    if (error) alert('ステータスの更新に失敗しました')
+    if (error) {
+      alert(`${name}さんのステータス更新に失敗しました`)
+      // 失敗したら元の表示に戻す
+      setMemberStatuses(prev => ({ ...prev, [name]: !newStatus }))
+    }
   }
 
   // Slackへの呼び出し送信
@@ -44,40 +61,31 @@ export default function PatrolDashboard() {
   return (
     <div className="min-h-screen bg-[#FFF5E9] p-4 font-sans text-[#4A4A4A]">
       
-      {/* --- PATROL STATUS --- */}
+      {/* --- PATROL STATUS (全員分にスイッチを追加) --- */}
       <div className="bg-white rounded-[32px] p-6 shadow-sm mb-6 border border-orange-100">
         <div className="flex items-center gap-2 mb-6">
           <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-          <h2 className="text-orange-500 font-black tracking-widest text-sm">PATROL STATUS</h2>
+          <h2 className="text-orange-500 font-black tracking-widest text-sm uppercase">Patrol Status</h2>
         </div>
 
         <div className="space-y-4">
-          {/* 他のメンバー（固定表示例） */}
-          {['橋本真旺', '岸遥杜', '高野諭'].map((name) => (
-            <div key={name} className="bg-[#FFF9F2] p-4 rounded-2xl flex justify-between items-center">
+          {MEMBERS.map((m) => (
+            <div key={m.name} className="bg-orange-50/50 p-4 rounded-2xl flex justify-between items-center border border-orange-100/50">
               <div>
-                <p className="font-bold text-lg mb-1">{name}</p>
-                <p className="text-[#00B96B] text-sm font-bold">● 対応可能</p>
+                <p className="font-bold text-lg mb-1">{m.name}</p>
+                <p className={`${memberStatuses[m.name] ? 'text-[#00B96B]' : 'text-red-500'} text-sm font-bold`}>
+                  ● {memberStatuses[m.name] ? '対応可能' : '対応不可'}
+                </p>
               </div>
+              {/* 全員に配置したスイッチUI */}
+              <button 
+                onClick={() => handleStatusToggle(m.name)}
+                className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${memberStatuses[m.name] ? 'bg-[#00B96B]' : 'bg-gray-300'}`}
+              >
+                <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${memberStatuses[m.name] ? 'translate-x-6' : 'translate-x-0'}`}></div>
+              </button>
             </div>
           ))}
-
-          {/* 自分のステータス（スイッチ付き） */}
-          <div className="bg-orange-50 p-4 rounded-2xl flex justify-between items-center border border-orange-200">
-            <div>
-              <p className="font-bold text-lg mb-1">岩﨑丈一郎</p>
-              <p className={`${myStatus ? 'text-[#00B96B]' : 'text-red-500'} text-sm font-bold`}>
-                ● {myStatus ? '対応可能' : '対応不可'}
-              </p>
-            </div>
-            {/* スイッチUI */}
-            <button 
-              onClick={handleStatusToggle}
-              className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${myStatus ? 'bg-[#00B96B]' : 'bg-gray-300'}`}
-            >
-              <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${myStatus ? 'translate-x-6' : 'translate-x-0'}`}></div>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -90,25 +98,26 @@ export default function PatrolDashboard() {
 
         <div className="space-y-6">
           <div>
-            <label className="text-sm font-bold mb-2 block">誰を呼びますか？</label>
+            <label className="text-sm font-bold mb-2 block ml-1">誰を呼びますか？</label>
+            {/* メンバー全員を追加したプルダウン */}
             <select 
               value={whoToCall}
               onChange={(e) => setWhoToCall(e.target.value)}
               className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none"
             >
               <option value="全員">全員</option>
-              <option value="岩﨑丈一郎">岩﨑丈一郎</option>
-              <option value="橋本真旺">橋本真旺</option>
+              {MEMBERS.map(m => (
+                <option key={m.name} value={m.name}>{m.name}</option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="text-sm font-bold mb-2 block">あなたのチーム名</label>
-            {/* の選択式を採用 */}
+            <label className="text-sm font-bold mb-2 block ml-1">あなたのチーム名</label>
             <select 
               value={selectedTeam}
               onChange={(e) => setSelectedTeam(e.target.value)}
-              className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none"
+              className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none"
             >
               {['A', 'B', 'C', 'D', 'E', 'F'].map(t => (
                 <option key={t} value={t}>{t} チーム</option>
@@ -137,7 +146,7 @@ export default function PatrolDashboard() {
 
           <button 
             onClick={handleCallSubmit}
-            className="w-full bg-white text-orange-500 rounded-2xl py-5 font-black text-xl shadow-lg active:scale-95 transition-transform"
+            className="w-full bg-white text-orange-500 rounded-2xl py-5 font-black text-xl shadow-lg active:scale-95 transition-all hover:bg-orange-50"
           >
             呼び出しを送信
           </button>
