@@ -25,24 +25,25 @@ export default function PatrolDashboard() {
   const [callContent, setCallContent] = useState('')
 
   // ステータスを切り替える関数（全員分対応）
-  const handleStatusToggle = async (name: string) => {
-    const newStatus = !memberStatuses[name]
-    setMemberStatuses(prev => ({ ...prev, [name]: newStatus }))
-    
-    const supabase = createClient()
-    const statusText = newStatus ? '対応可能' : '対応不可'
-    
-    const { error } = await supabase
-  .from('patrol_members') // ← スクリーンショットの名前に合わせる
-  .update({ status: statusText })
-      .eq('name', name)
+ const handleStatusToggle = async (name: string) => {
+  const newStatus = !memberStatuses[name]
+  const supabase = createClient()
+  const statusText = newStatus ? '対応可能' : '対応不可'
+  
+  const { error } = await supabase
+    .from('patrol_members') 
+    .update({ status: statusText })
+    .eq('name', name)
 
-    if (error) {
-      alert(`${name}さんのステータス更新に失敗しました`)
-      // 失敗したら元の表示に戻す
-      setMemberStatuses(prev => ({ ...prev, [name]: !newStatus }))
-    }
+  if (error) {
+    // 🚨 ここを書き換えて、詳しいエラーメッセージを画面に出します
+    alert(`エラーが発生しました！\nメッセージ: ${error.message}\n詳細: ${error.details}`);
+    return;
   }
+
+  // 成功した時だけ画面のスイッチを切り替える
+  setMemberStatuses(prev => ({ ...prev, [name]: newStatus }))
+}
 
   // Slackへの呼び出し送信
   const handleCallSubmit = async () => {
