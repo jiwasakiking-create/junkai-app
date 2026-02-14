@@ -4,7 +4,7 @@
 import { useState } from 'react'
 // 修正前: import { createClient } from '@/lib/supabase'
 // 修正後:
-import createClient from '../lib/supabase'
+import { createClient } from '../lib/supabase'
 
 export default function PatrolPage() {
   const [selectedTeam, setSelectedTeam] = useState('A')
