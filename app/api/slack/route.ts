@@ -21,7 +21,7 @@ export async function POST(request: Request) {
             type: "button",
             text: {
               type: "plain_text",
-              text: "✅ 対応完了（ステータスを戻す）"
+              text: "✅ 対応完了（対応したら押してね）"
             },
             style: "primary",
             value: who,
