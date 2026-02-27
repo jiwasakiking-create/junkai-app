@@ -9,7 +9,7 @@ import { createClient } from '../lib/supabase'
 const MEMBERS = [
   { id: 1, name: '岸遥杜' },
   { id: 2, name: '高野諭' },
-  { id: 3, name: '岩﨑丈一郎' },
+  { id: 3, name: '橋本真旺' },
   { id: 4, name: '角田麗衣' },
   { id: 5, name: '宇田津蓮' }
 ]
