@@ -1,27 +1,31 @@
-
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '../lib/supabase'
 
-// 1. メンバー情報の定義 (最新の 5 名)
+// メンバー情報
 const MEMBERS = [
   { id: 1, name: '岸遥杜' },
   { id: 2, name: '高野諭' },
-  { id: 3, name: '橋本真旺' },
+  { id: 3, name: '岩﨑丈一郎' },
   { id: 4, name: '角田麗衣' },
   { id: 5, name: '宇田津蓮' }
 ]
 
-// 2. 議事録 URL の定義
+// 📝 12 チーム分の議事録 URL 定義
 const TEAM_URLS: { [key: string]: string } = {
-  'A': 'https://docs.google.com/document/d/1To7aS1kk2B2a-nb6EwatemNo8-nNTZOKnBOyk4dNhPA/edit?usp=drivesdk',
-  'B': 'https://docs.google.com/document/d/1zdlPcwpowFl5Qm6Q884uzuckRW-JZftYKyD0M9AZi3w/edit?usp=drivesdk',
-  'C': 'https://docs.google.com/document/d/1WR5J3oT3WYIds1z3C2G6XUNzijpz9VEo7l-cIKP2J-s/edit?usp=drivesdk',
-  'D': 'https://docs.google.com/document/d/1XS8atqNrAdR21m5Ii_w9QM2VNaBFiB5wIjmNmIKSxco/edit?usp=drivesdk',
-  'E': 'https://docs.google.com/document/d/1kbYjxzomM1HH9UOTwJa00Ggfmjxoz5-lfBSLvRHSJCs/edit?usp=drivesdk',
-  'F': 'https://docs.google.com/document/d/1xP7PT8W2pHGXf-268TvUl9wStwg2lZd0Qa_EtMr_VIk/edit?usp=drivesdk'
+  'A': 'https://docs.google.com/document/d/17Z0-i5Rci5zWcCeKPqOUg7Qurn1dJQYZ2bUAJ0fkhAY/edit?usp=drivesdk',
+  'B': 'https://docs.google.com/document/d/1vpzlPHC2bT-4l3tlpzWm0md_8m-idBr8A2vU7IkvgwE/edit?usp=drivesdk',
+  'C': 'https://docs.google.com/document/d/1MxsSLM6VxKTQeZtpGz64fzH3QTduPPXTFcCLk-lq4Fk/edit?usp=drivesdk',
+  'D': 'https://docs.google.com/document/d/1-pQA1UI3zFRFmXYq2vWB-Vtka7lL2m8DvOKIOs1ewok/edit?usp=drivesdk',
+  'E': 'https://docs.google.com/document/d/1j9SxL1AIG2pwWbCKQfRVRb0bLdNFvBVBb_Jmgg9v0uE/edit?usp=drivesdk',
+  'F': 'https://docs.google.com/document/d/1qb-rwK0uUIk_2x-Wd3EGe8ab0xe8rVo2vwZtCM8Nj1I/edit?usp=drivesdk',
+  'G': 'https://docs.google.com/document/d/12sY2iUQ0U1pP6E9rOq4YXMJsUAli02cKQFEdEqjlAPw/edit?usp=drivesdk',
+  'H': 'https://docs.google.com/document/d/1vBqZcn4VVI1UuSdADUOG8l1VRJCVrNKMHSKye14u0nE/edit?usp=drivesdk',
+  'I': 'https://docs.google.com/document/d/1xa56wRsUpuhQHBJMldrzsbroLcxLDvldrQ1wmK4TJek/edit?usp=drivesdk',
+  'J': 'https://docs.google.com/document/d/1EgEeCaY8FR4IrK4LHmSUQqoJXE-vvtJ22LVSVk6T1fw/edit?usp=drivesdk',
+  'K': 'https://docs.google.com/document/d/1BHtqEbnaFVr0ftxP94mELfS01fWTV6oB4AZLbjO7IkM/edit?usp=drivesdk',
+  'L': 'https://docs.google.com/document/d/14Jikcz4MwKONlrTlYAo3ufN5cBaAG18BsJ5E48egg8Q/edit?usp=drivesdk'
 }
 
 export default function PatrolDashboard() {
@@ -36,7 +40,7 @@ export default function PatrolDashboard() {
   // 🔄 リアルタイム同期
   useEffect(() => {
     const fetchInitialStatuses = async () => {
-      const { data } = await supabase.from('patrol_members').select('name, status')
+      const { data } = await supabase.from('patrol_members').select('name, status') //
       if (data) {
         const statusMap: { [key: string]: boolean } = {}
         data.forEach(row => { statusMap[row.name] = (row.status === '対応可能') })
@@ -63,7 +67,6 @@ export default function PatrolDashboard() {
   }
 
   const handleCallSubmit = async () => {
-    // 🚀 選択されたチームに応じた議事録 URL を一緒に送る
     const response = await fetch('/api/slack', {
       method: 'POST',
       body: JSON.stringify({ 
@@ -124,9 +127,11 @@ export default function PatrolDashboard() {
           </div>
           <div>
             <label className="text-sm font-bold mb-2 block ml-1">あなたのチーム名</label>
-            {/* 🛠️ A〜F に絞り込み */}
+            {/* 🛠️ A～L の 12 チームに拡大 */}
             <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none">
-              {['A', 'B', 'C', 'D', 'E', 'F'].map(t => <option key={t} value={t}>{t} チーム</option>)}
+              {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'].map(t => (
+                <option key={t} value={t}>{t} チーム</option>
+              ))}
             </select>
           </div>
           <input placeholder="記入者名" value={submitter} onChange={(e) => setSubmitter(e.target.value)} className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold placeholder:text-orange-200 outline-none" />
