@@ -5,11 +5,11 @@ import { createClient } from '../lib/supabase'
 
 // メンバー情報
 const MEMBERS = [
-  { id: 1, name: '岸遥杜' },
-  { id: 2, name: '高野諭' },
-  { id: 3, name: '岩﨑丈一郎' },
-  { id: 4, name: '角田麗衣' },
-  { id: 5, name: '宇田津蓮' }
+  { id: 1, name: '岸遥杜', slackId: 'U0AJQ965RB4' },
+  { id: 2, name: '高野諭', slackId: 'U0AK1JTRRMX' },
+  { id: 3, name: '岩﨑丈一郎', slackId: 'U0AJFL0KDLK' }, // 以前の橋本さんのIDを継承
+  { id: 4, name: '角田麗衣', slackId: 'U0AJRC7HU2G' },
+  { id: 5, name: '宇田津蓮', slackId: 'U0AJLF52B5K' }
 ]
 
 // 📝 12 チーム分の議事録 URL 定義
@@ -67,11 +67,26 @@ export default function PatrolDashboard() {
   }
 
   const handleCallSubmit = async () => {
+    // 🚀 メンション文字列の作成ロジック
+    let mention = ''
+    
+    if (whoToCall === '全員') {
+      // 全員の場合は、5名全員のIDを繋げる
+      mention = MEMBERS.map(m => `<@${m.slackId}>`).join(' ')
+    } else {
+      // 個人の場合は、その人のIDのみ
+      const target = MEMBERS.find(m => m.name === whoToCall)
+      if (target) {
+        mention = `<@${target.slackId}>`
+      }
+    }
+
     const response = await fetch('/api/slack', {
       method: 'POST',
       body: JSON.stringify({ 
         team: selectedTeam, 
         who: whoToCall, 
+        mention: mention, // 追加したメンションを送る
         sender: submitter, 
         content: callContent,
         minutesUrl: TEAM_URLS[selectedTeam] 
@@ -79,12 +94,13 @@ export default function PatrolDashboard() {
     })
 
     if (response.ok) {
+      // Supabaseのステータス更新
       if (whoToCall === '全員') {
         await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', MEMBERS.map(m => m.name))
       } else {
         await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
       }
-      alert(`${selectedTeam}チームの呼び出しを送信しました！`)
+      alert('巡回メンバーへの通知とステータス更新が完了しました！')
     }
   }
 

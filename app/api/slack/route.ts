@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
-  const { team, who, sender, content, minutesUrl } = await request.json()
+  // 1. mention を受け取るように追加します
+  const { team, who, mention, sender, content, minutesUrl } = await request.json()
   const WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
 
   const message = {
@@ -10,7 +11,8 @@ export async function POST(request: Request) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `🚨 *巡回呼び出し (${team}チーム)* 🚨\n\n*対象:* ${who}\n*記入者:* ${sender}\n*内容:* ${content}\n\n📖 *<${minutesUrl}|このチームの議事録を開く>*`
+          // 2. メッセージの文頭に ${mention} を差し込みます
+          text: `${mention}\n🚨 *巡回呼び出し (${team}チーム)* 🚨\n\n*対象:* ${who}\n*記入者:* ${sender}\n*内容:* ${content}\n\n📖 *<${minutesUrl}|このチームの議事録を開く>*`
         }
       },
       {
