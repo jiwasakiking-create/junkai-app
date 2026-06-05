@@ -5,11 +5,12 @@ import { createClient } from '../lib/supabase'
 
 // メンバー情報
 const MEMBERS = [
-  { id: 1, name: '岸遥杜', slackId: 'U0AJQ965RB4' },
-  { id: 2, name: '高野諭', slackId: 'U0AK1JTRRMX' },
-  { id: 3, name: '岩﨑丈一郎', slackId: 'U0AJFL0KDLK' }, // 以前の橋本さんのIDを継承
-  { id: 4, name: '角田麗衣', slackId: 'U0AJRC7HU2G' },
-  { id: 5, name: '宇田津蓮', slackId: 'U0AJLF52B5K' }
+  { id: 1, name: '吉田壮志朗', slackId: 'U09DUE84AG7' },
+  { id: 2, name: '金子休太郎', slackId: 'U09CWULFMC3' },
+  { id: 3, name: '黒岩賢人', slackId: 'U09SAFYLHU1' },
+  { id: 4, name: '樫八重秀太朗', slackId: 'U09DNNYQVDE' },
+  { id: 5, name: '高野諭', slackId: 'U09RTBBECAF' },
+  { id: 6, name: '髙野幹太', slackId: 'U09RR707FQT' }
 ]
 
 // 📝 12 チーム分の議事録 URL 定義
