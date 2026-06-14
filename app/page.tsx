@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '../lib/supabase'
 
-// 1. 新しい6名体制のメンバー情報（Slack ID付き）
+// 1. 新しい6名体制のメンバー情報
 const MEMBERS = [
   { id: 1, name: '吉田壮志朗', slackId: 'U09DUE84AG7' },
   { id: 2, name: '金子休太郎', slackId: 'U09CWULFMC3' },
@@ -22,7 +22,7 @@ const TEAM_URLS: { [key: string]: string } = {
   'E': 'https://docs.google.com/document/d/1sAZqen25K6UG_gdQgPwNjyHotmijtY7_87V89D7GUzM/edit?usp=drivesdk',
   'F': 'https://docs.google.com/document/d/1V7PQvX9d8-2t6XKMmq0bGs7BKycAUvAgIJX1n42Qtjs/edit?usp=drivesdk',
   'G': 'https://docs.google.com/document/d/16kesOrtDMaHIwBwkYswy-xbcSFKEKbPsgHmALEXNQis/edit?usp=drivesdk',
-  'H': 'https://docs.google.com/document/d/1Fwmo4VS7Wxk-9oUIHVadzVgj1lFMY17_nA4J7CgyUyo/edit?usp=drivesdk'
+  'H': 'https://docs.google.com/document/d/1A4tEcjuh-p8dV695EP1Dw6wiHPqA--vyLEWJja971UU/edit?usp=drivesdk'
 }
 
 export default function PatrolDashboard() {
@@ -63,7 +63,8 @@ export default function PatrolDashboard() {
     await supabase.from('patrol_members').update({ status: statusText }).eq('name', name)
   }
 
- const handleCallSubmit = async () => {
+  // 📢 呼び出し送信処理（async を確実に付与）
+  const handleCallSubmit = async () => {
     // 🚀 1. メンション文字列の作成
     let mention = ''
     if (whoToCall === '全員') {
@@ -75,23 +76,27 @@ export default function PatrolDashboard() {
       }
     }
 
-    // 🚀 2. スプレッドシート（GAS）へデータを自動送信する処理を追加
+    // 🚀 2. スプレッドシート（GAS）へデータを自動送信
     const gasUrl = process.env.NEXT_PUBLIC_GAS_URL
     if (gasUrl) {
-      fetch(gasUrl, {
-        method: 'POST',
-        mode: 'no-cors', // クロスドメイン通信のエラーを防ぐおまじない
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          team: selectedTeam,
-          who: whoToCall,
-          sender: submitter,
-          content: callContent
+      try {
+        await fetch(gasUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            team: selectedTeam,
+            who: whoToCall,
+            sender: submitter,
+            content: callContent
+          })
         })
-      }).catch(err => console.error("GAS送信エラー:", err))
+      } catch (err) {
+        console.error("GAS送信エラー:", err)
+      }
     }
 
-    // 🚀 3. Slackへの通知処理（既存のまま）
+    // 🚀 3. Slackへの通知処理
     const response = await fetch('/api/slack', {
       method: 'POST',
       body: JSON.stringify({ 
@@ -104,6 +109,7 @@ export default function PatrolDashboard() {
       }),
     })
 
+    // 🚀 4. Supabaseのステータス更新
     if (response.ok) {
       if (whoToCall === '全員') {
         await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', MEMBERS.map(m => m.name))
@@ -111,28 +117,6 @@ export default function PatrolDashboard() {
         await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
       }
       alert(`${selectedTeam}チームの呼び出しを送信しました！履歴もスプレッドシートに記録されました。`)
-    }
-  }
-
-    const response = await fetch('/api/slack', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        team: selectedTeam, 
-        who: whoToCall, 
-        mention: mention, 
-        sender: submitter, 
-        content: callContent,
-        minutesUrl: TEAM_URLS[selectedTeam] 
-      }),
-    })
-
-    if (response.ok) {
-      if (whoToCall === '全員') {
-        await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', MEMBERS.map(m => m.name))
-      } else {
-        await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
-      }
-      alert(`${selectedTeam}チームの呼び出しを送信しました！`)
     }
   }
 
@@ -177,7 +161,6 @@ export default function PatrolDashboard() {
           </div>
           <div>
             <label className="text-sm font-bold mb-2 block ml-1">あなたのチーム名</label>
-            {/* 🛠️ 選択肢を A～H の 8 チームに整理 */}
             <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none">
               {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(t => (
                 <option key={t} value={t}>{t} チーム</option>
