@@ -9,7 +9,7 @@ const MEMBERS = [
   { id: 2, name: '金子休太郎', slackId: 'U09CWULFMC3' },
   { id: 3, name: '黒岩賢人', slackId: 'U09SAFYLHU1' },
   { id: 4, name: '樫八重秀太朗', slackId: 'U09DNNYQVDE' },
-  { id: 5, name: '高野諭', slackId: 'U09RTBBECAF' },
+  { id: 5, name: '高野諭', slackId: 'U09DNLD735W' },
   { id: 6, name: '髙野幹太', slackId: 'U09RR707FQT' }
 ]
 
