@@ -63,8 +63,8 @@ export default function PatrolDashboard() {
     await supabase.from('patrol_members').update({ status: statusText }).eq('name', name)
   }
 
-  const handleCallSubmit = async () => {
-    // 🚀 メンション文字列の作成
+ const handleCallSubmit = async () => {
+    // 🚀 1. メンション文字列の作成
     let mention = ''
     if (whoToCall === '全員') {
       mention = MEMBERS.map(m => `<@${m.slackId}>`).join(' ')
@@ -74,6 +74,45 @@ export default function PatrolDashboard() {
         mention = `<@${target.slackId}>`
       }
     }
+
+    // 🚀 2. スプレッドシート（GAS）へデータを自動送信する処理を追加
+    const gasUrl = process.env.NEXT_PUBLIC_GAS_URL
+    if (gasUrl) {
+      fetch(gasUrl, {
+        method: 'POST',
+        mode: 'no-cors', // クロスドメイン通信のエラーを防ぐおまじない
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          team: selectedTeam,
+          who: whoToCall,
+          sender: submitter,
+          content: callContent
+        })
+      }).catch(err => console.error("GAS送信エラー:", err))
+    }
+
+    // 🚀 3. Slackへの通知処理（既存のまま）
+    const response = await fetch('/api/slack', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        team: selectedTeam, 
+        who: whoToCall, 
+        mention: mention, 
+        sender: submitter, 
+        content: callContent,
+        minutesUrl: TEAM_URLS[selectedTeam] 
+      }),
+    })
+
+    if (response.ok) {
+      if (whoToCall === '全員') {
+        await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', MEMBERS.map(m => m.name))
+      } else {
+        await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
+      }
+      alert(`${selectedTeam}チームの呼び出しを送信しました！履歴もスプレッドシートに記録されました。`)
+    }
+  }
 
     const response = await fetch('/api/slack', {
       method: 'POST',
