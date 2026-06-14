@@ -77,8 +77,9 @@ export default function PatrolDashboard() {
     }
 
     // 🚀 2. スプレッドシート（GAS）へデータを自動送信
-    const gasUrl = process.env.NEXT_PUBLIC_GAS_URL
-    if (gasUrl) {
+// 👇 ここにあなたの GAS の URL を直接貼り付けます（前後の単一引用符 ' ' を忘れないでください）
+const gasUrl = 'https://script.google.com/macros/s/AKfycbyA35veRxhPr2apZxxKr30TJMUJoJPN1VkrpbGGK9OhFTjruwoSDp--0Op8wrjBEjFl/exec' 
+if (gasUrl) {
       try {
         // 確実にデータを届けるためにテキスト形式に変換して送信
         const params = new URLSearchParams({
