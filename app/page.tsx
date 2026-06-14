@@ -80,16 +80,17 @@ export default function PatrolDashboard() {
     const gasUrl = process.env.NEXT_PUBLIC_GAS_URL
     if (gasUrl) {
       try {
-        await fetch(gasUrl, {
+        // 確実にデータを届けるためにテキスト形式に変換して送信
+        const params = new URLSearchParams({
+          team: selectedTeam,
+          who: whoToCall,
+          sender: submitter,
+          content: callContent
+        })
+        
+        await fetch(`${gasUrl}?${params.toString()}`, {
           method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            team: selectedTeam,
-            who: whoToCall,
-            sender: submitter,
-            content: callContent
-          })
+          mode: 'no-cors' // これでブラウザの赤文字エラーを防ぎつつデータを届けます
         })
       } catch (err) {
         console.error("GAS送信エラー:", err)
