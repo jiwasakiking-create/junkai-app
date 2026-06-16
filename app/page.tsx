@@ -3,30 +3,71 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '../lib/supabase'
 
-// 1. 新しい6名体制のメンバー情報
-const MEMBERS = [
-  { id: 1, name: '吉田壮志朗', slackId: 'U09DUE84AG7' },
-  { id: 2, name: '金子休太郎', slackId: 'U09CWULFMC3' },
-  { id: 3, name: '黒岩賢人', slackId: 'U09SAFYLHU1' },
-  { id: 4, name: '樫八重秀太朗', slackId: 'U09DNNYQVDE' },
-  { id: 5, name: '岩﨑丈一郎', slackId: 'U09DNLD735W' },
-  { id: 6, name: '髙野幹太', slackId: 'U09RR707FQT' }
+// 1. グループ体制の定義
+const GROUPS = [
+  {
+    id: 1,
+    name: '➀高野諭・吉田壮志朗',
+    members: [
+      { name: '高野諭', slackId: 'U0BAHU93J73' },
+      { name: '吉田壮志朗', slackId: 'U0BAMPKEZJQ' }
+    ]
+  },
+  {
+    id: 2,
+    name: '➁角田麗衣・池田睦',
+    members: [
+      { name: '角田麗衣', slackId: 'U0BAHS1LZ4Z' },
+      { name: '池田睦', slackId: 'U0BA9LT80PM' } 
+    ]
+  },
+  {
+    id: 3,
+    name: '➂髙野幹太・宇田津蓮',
+    members: [
+      { name: '髙野幹太', slackId: 'U0BAEPYKN03' },
+      { name: '宇田津蓮', slackId: 'U0BA0PBR99D' }
+    ]
+  },
+  {
+    id: 4,
+    name: '➃西川和華・樫八重秀太朗',
+    members: [
+      { name: '西川和華', slackId: 'U0BA0M0CEG7' }, // ※仮のID
+      { name: '樫八重秀太朗', slackId: 'U0BAP47ELF5' }
+    ]
+  },
+  {
+    id: 5,
+    name: '➄岸遥杜',
+    members: [
+      { name: '岸遥杜', slackId: 'U0BAG07G334' }
+    ]
+  }
 ]
 
-// 2. 新しい A〜H チームの議事録 URL 定義
+// 2. 新しい A〜P チーム（16チーム分）の議事録 URL 定義
 const TEAM_URLS: { [key: string]: string } = {
-  'A': 'https://docs.google.com/document/d/16cCnrPXI0bRsdYGcmsoVmzJ1cXMOtAYJwq-CBqt32qw/edit?usp=drivesdk',
-  'B': 'https://docs.google.com/document/d/1_qit4TGmo8dVofR3NLOdI-Gjq66lD8LP2KGpCClL-Vg/edit?usp=drivesdk',
-  'C': 'https://docs.google.com/document/d/1KsIYjSrdEeodyz4-hV1fJbnExF8NHIZ59mNEZX3Pgk0/edit?usp=drivesdk',
-  'D': 'https://docs.google.com/document/d/1d4F4gexcgk9rid4h_PoUuSDrpm5UL93ytjKlYfCuuiM/edit?usp=drivesdk',
-  'E': 'https://docs.google.com/document/d/1sAZqen25K6UG_gdQgPwNjyHotmijtY7_87V89D7GUzM/edit?usp=drivesdk',
-  'F': 'https://docs.google.com/document/d/1V7PQvX9d8-2t6XKMmq0bGs7BKycAUvAgIJX1n42Qtjs/edit?usp=drivesdk',
-  'G': 'https://docs.google.com/document/d/16kesOrtDMaHIwBwkYswy-xbcSFKEKbPsgHmALEXNQis/edit?usp=drivesdk',
-  'H': 'https://docs.google.com/document/d/1A4tEcjuh-p8dV695EP1Dw6wiHPqA--vyLEWJja971UU/edit?usp=drivesdk'
+  'A': 'https://docs.google.com/document/d/153Ud9jgqQoazXQPLCmzkx3t5QwnZ2u2iZciU8ulq3cU/edit?usp=drivesdk',
+  'B': 'https://docs.google.com/document/d/1EpvGgnKJ01zg2UpjdPysHJgvNUwI5E3hX5n0MdhYsmU/edit?usp=drivesdk',
+  'C': 'https://docs.google.com/document/d/1UPu4SF_CbKGCz4dVCQ4j9YqaCsjIUx0u51goaH6uYWA/edit?usp=drivesdk',
+  'D': 'https://docs.google.com/document/d/1cjkHvhfGRN_gkorRc9f4byj6nhw-jWlFriVa8RvZiXE/edit?usp=drivesdk',
+  'E': 'https://docs.google.com/document/d/1NKBBD5t-8e8CsVlO4wshekcEVa2M1bRWgtZ3yKc9j0Y/edit?usp=drivesdk',
+  'F': 'https://docs.google.com/document/d/11s8TSHy7R-GMTvfb7a8WKKAN4lOdPJF0ZAJlTRRVwtQ/edit?usp=drivesdk',
+  'G': 'https://docs.google.com/document/d/1YFYEbUySixSPZ7N7SC48S0WRChI_Gb2IrptqbwSvZXw/edit?usp=drivesdk',
+  'H': 'https://docs.google.com/document/d/1oquarIAKvg6FiYYt1PlXNYLA6Tcmxv812aWp6hj8GN0/edit?usp=drivesdk',
+  'I': 'https://docs.google.com/document/d/1hVDP_00iBrTlQg3FptCLwoIYh3mtc4q_5yD23aiVsFc/edit?usp=drivesdk',
+  'J': 'https://docs.google.com/document/d/1HNdDisVnsJhkW6lKgqEzRMCHOq_lF8s9BpRUlbNv7_0/edit?usp=drivesdk',
+  'K': 'https://docs.google.com/document/d/1cmTXIebraN1V-cVzXgPsCGY5ajI1-BxDH9fIZn_BMJI/edit?usp=drivesdk',
+  'L': 'https://docs.google.com/document/d/1HaZZwRDzMoZLrjWPfpgXstbknH7o4h0XqPQRjKoVz0U/edit?usp=drivesdk',
+  'M': 'https://docs.google.com/document/d/1AC5TMzESEoGUx59OCOoHs3kJRgBVhPXQXOr9Ksd3bPw/edit?usp=drivesdk',
+  'N': 'https://docs.google.com/document/d/1gpoC9bI6qNAr8B5CQ5FmLcDb5xRvAAyo4KsrswjS3LM/edit?usp=drivesdk',
+  'O': 'https://docs.google.com/document/d/1sA3v-yYMZ1Bd20sHRE5Au8gdZOljnGKI0Pf3QkY_sQI/edit?usp=drivesdk',
+  'P': 'https://docs.google.com/document/d/1jcNcd8DArH4-KLaOpvlHqFjkeRPEfXO-Sxnv5RfkFX0/edit?usp=drivesdk'
 }
 
 export default function PatrolDashboard() {
-  const [memberStatuses, setMemberStatuses] = useState<{ [key: string]: boolean }>({})
+  const [groupStatuses, setGroupStatuses] = useState<{ [key: string]: boolean }>({})
   const [selectedTeam, setSelectedTeam] = useState('A')
   const [whoToCall, setWhoToCall] = useState('全員')
   const [submitter, setSubmitter] = useState('')
@@ -41,7 +82,7 @@ export default function PatrolDashboard() {
       if (data) {
         const statusMap: { [key: string]: boolean } = {}
         data.forEach(row => { statusMap[row.name] = (row.status === '対応可能') })
-        setMemberStatuses(statusMap)
+        setGroupStatuses(statusMap)
       }
     }
     fetchInitialStatuses()
@@ -50,7 +91,7 @@ export default function PatrolDashboard() {
       .channel('realtime-updates')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'patrol_members' }, (payload) => {
         const { name, status } = payload.new
-        setMemberStatuses(prev => ({ ...prev, [name]: status === '対応可能' }))
+        setGroupStatuses(prev => ({ ...prev, [name]: status === '対応可能' }))
       })
       .subscribe()
 
@@ -58,39 +99,26 @@ export default function PatrolDashboard() {
   }, [])
 
   const handleStatusToggle = async (name: string) => {
-    const currentStatus = memberStatuses[name]
+    const currentStatus = groupStatuses[name]
     const statusText = !currentStatus ? '対応可能' : '対応不可'
     await supabase.from('patrol_members').update({ status: statusText }).eq('name', name)
   }
 
   // 📢 呼び出し送信処理
   const handleCallSubmit = async () => {
-    // 🚀 1. メンション文字列の作成
     let mention = ''
+    
     if (whoToCall === '全員') {
-      mention = MEMBERS.map(m => `<@${m.slackId}>`).join(' ')
+      const allIds = GROUPS.flatMap(g => g.members.map(m => `<@${m.slackId}>`))
+      mention = allIds.join(' ')
     } else {
-      const target = MEMBERS.find(m => m.name === whoToCall)
-      if (target) {
-        mention = `<@${target.slackId}>`
+      const targetGroup = GROUPS.find(g => g.name === whoToCall)
+      if (targetGroup) {
+        mention = targetGroup.members.map(m => `<@${m.slackId}>`).join(' ')
       }
     }
 
-    // 🚀 2. 【変更】Supabaseの「patrol_history」テーブルに直接履歴を書き込む
-    try {
-      await supabase.from('patrol_history').insert([
-        {
-          team: `${selectedTeam}チーム`,
-          who: whoToCall,
-          sender: submitter,
-          content: callContent
-        }
-      ])
-    } catch (err) {
-      console.error("履歴保存エラー:", err)
-    }
-
-    // 🚀 3. Slackへの通知処理
+    // Slackへの通知処理
     const response = await fetch('/api/slack', {
       method: 'POST',
       body: JSON.stringify({ 
@@ -103,36 +131,36 @@ export default function PatrolDashboard() {
       }),
     })
 
-    // 🚀 4. Supabaseのステータス更新
+    // Supabaseのステータス更新
     if (response.ok) {
       if (whoToCall === '全員') {
-        await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', MEMBERS.map(m => m.name))
+        await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', GROUPS.map(g => g.name))
       } else {
         await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
       }
-      alert(`${selectedTeam}チームの呼び出しを送信しました！履歴もデータベースに安全に保存されました。`)
+      alert(`${selectedTeam}チームの呼び出しを送信しました！`)
     }
   }
 
   return (
     <div className="min-h-screen bg-[#FFF5E9] p-4 font-sans text-[#4A4A4A]">
-      {/* メンバーのステータス一覧 */}
+      {/* グループのステータス一覧 */}
       <div className="bg-white rounded-[32px] p-6 shadow-sm mb-6 border border-orange-100">
         <div className="flex items-center gap-2 mb-6">
           <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-          <h2 className="text-orange-500 font-black tracking-widest text-sm uppercase">Patrol Status</h2>
+          <h2 className="text-orange-500 font-black tracking-widest text-sm uppercase">Group Status</h2>
         </div>
         <div className="space-y-4">
-          {MEMBERS.map((m) => (
-            <div key={m.name} className="bg-orange-50/50 p-4 rounded-2xl flex justify-between items-center border border-orange-100/50">
+          {GROUPS.map((g) => (
+            <div key={g.name} className="bg-orange-50/50 p-4 rounded-2xl flex justify-between items-center border border-orange-100/50">
               <div>
-                <p className="font-bold text-lg mb-1">{m.name}</p>
-                <p className={`${memberStatuses[m.name] ? 'text-[#00B96B]' : 'text-red-500'} text-sm font-bold`}>
-                  ● {memberStatuses[m.name] ? '対応可能' : '対応不可'}
+                <p className="font-bold text-lg mb-1">{g.name}</p>
+                <p className={`${groupStatuses[g.name] ? 'text-[#00B96B]' : 'text-red-500'} text-sm font-bold`}>
+                  ● {groupStatuses[g.name] ? '対応可能' : '対応不可'}
                 </p>
               </div>
-              <button onClick={() => handleStatusToggle(m.name)} className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${memberStatuses[m.name] ? 'bg-[#00B96B]' : 'bg-gray-300'}`}>
-                <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${memberStatuses[m.name] ? 'translate-x-6' : 'translate-x-0'}`}></div>
+              <button onClick={() => handleStatusToggle(g.name)} className={`w-14 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${groupStatuses[g.name] ? 'bg-[#00B96B]' : 'bg-gray-300'}`}>
+                <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${groupStatuses[g.name] ? 'translate-x-6' : 'translate-x-0'}`}></div>
               </button>
             </div>
           ))}
@@ -143,20 +171,21 @@ export default function PatrolDashboard() {
       <div className="bg-orange-500 rounded-[32px] p-6 text-white shadow-xl">
         <div className="flex justify-center items-center gap-2 mb-8">
           <span className="text-3xl">📢</span>
-          <h2 className="text-2xl font-black italic">巡回を呼び出す</h2>
+          <h2 className="text-2xl font-black italic">グループを呼び出す</h2>
         </div>
         <div className="space-y-6">
           <div>
-            <label className="text-sm font-bold mb-2 block ml-1">誰を呼びますか？</label>
+            <label className="text-sm font-bold mb-2 block ml-1">どのグループを呼びますか？</label>
             <select value={whoToCall} onChange={(e) => setWhoToCall(e.target.value)} className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none">
               <option value="全員">全員</option>
-              {MEMBERS.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
+              {GROUPS.map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
             </select>
           </div>
           <div>
             <label className="text-sm font-bold mb-2 block ml-1">あなたのチーム名</label>
             <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none">
-              {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(t => (
+              {/* 🛠️ A～P までの 16 チームに拡張 */}
+              {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'].map(t => (
                 <option key={t} value={t}>{t} チーム</option>
               ))}
             </select>
