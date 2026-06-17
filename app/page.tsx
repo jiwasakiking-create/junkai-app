@@ -106,6 +106,7 @@ export default function PatrolDashboard() {
 
   // 📢 呼び出し送信処理
   // 📢 呼び出し送信処理
+  // 📢 呼び出し送信処理
   const handleCallSubmit = async () => {
     let mention = ''
     
@@ -134,7 +135,8 @@ export default function PatrolDashboard() {
 
     // Supabaseのステータス更新 ＆ 呼び出し履歴の保存
     if (response.ok) {
-      const logsToInsert = []
+      // 💡 型（Objectの配列）を明示的に指定してエラーを回避します
+      const logsToInsert: { group_name: string; target_team: string }[] = []
 
       if (whoToCall === '全員') {
         // 「全員」呼び出しの場合：現在「対応可能」だったグループだけを出動データとして抽出して履歴に残す
