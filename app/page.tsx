@@ -105,6 +105,7 @@ export default function PatrolDashboard() {
   }
 
   // 📢 呼び出し送信処理
+  // 📢 呼び出し送信処理
   const handleCallSubmit = async () => {
     let mention = ''
     
@@ -117,6 +118,59 @@ export default function PatrolDashboard() {
         mention = targetGroup.members.map(m => `<@${m.slackId}>`).join(' ')
       }
     }
+
+    // Slackへの通知処理
+    const response = await fetch('/api/slack', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        team: selectedTeam, 
+        who: whoToCall, 
+        mention: mention, 
+        sender: submitter, 
+        content: callContent,
+        minutesUrl: TEAM_URLS[selectedTeam] 
+      }),
+    })
+
+    // Supabaseのステータス更新 ＆ 呼び出し履歴の保存
+    if (response.ok) {
+      const logsToInsert = []
+
+      if (whoToCall === '全員') {
+        // 「全員」呼び出しの場合：現在「対応可能」だったグループだけを出動データとして抽出して履歴に残す
+        GROUPS.forEach(g => {
+          if (groupStatuses[g.name] === true) {
+            logsToInsert.push({
+              group_name: g.name,
+              target_team: `${selectedTeam}チーム`
+            })
+          }
+        })
+
+        // 全員を対応不可に更新
+        await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', GROUPS.map(g => g.name))
+      } else {
+        // 特定の1グループ呼び出しの場合：そのグループのみ履歴に残す
+        logsToInsert.push({
+          group_name: whoToCall,
+          target_team: `${selectedTeam}チーム`
+        })
+
+        // 対象グループのみ対応不可に更新
+        await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
+      }
+
+      // ★ 新設した「patrol_call_logs」テーブルに呼び出し履歴を一括保存
+      if (logsToInsert.length > 0) {
+        const { error: logError } = await supabase.from('patrol_call_logs').insert(logsToInsert)
+        if (logError) {
+          console.error('呼び出し履歴の保存に失敗:', logError)
+        }
+      }
+
+      alert(`${selectedTeam}チームの呼び出しを送信しました！`)
+    }
+  }
 
     // Slackへの通知処理
     const response = await fetch('/api/slack', {
