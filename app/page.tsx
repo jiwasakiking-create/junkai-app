@@ -104,9 +104,7 @@ export default function PatrolDashboard() {
     await supabase.from('patrol_members').update({ status: statusText }).eq('name', name)
   }
 
-  // 📢 呼び出し送信処理
-  // 📢 呼び出し送信処理
-  // 📢 呼び出し送信処理
+  // 📢 呼び出し送信処理（呼び出し履歴保存機能付き）
   const handleCallSubmit = async () => {
     let mention = ''
     
@@ -135,7 +133,7 @@ export default function PatrolDashboard() {
 
     // Supabaseのステータス更新 ＆ 呼び出し履歴の保存
     if (response.ok) {
-      // 💡 型（Objectの配列）を明示的に指定してエラーを回避します
+      // 型（Objectの配列）を明示的に指定してTypeScriptのビルドエラーを防ぐ
       const logsToInsert: { group_name: string; target_team: string }[] = []
 
       if (whoToCall === '全員') {
@@ -170,30 +168,6 @@ export default function PatrolDashboard() {
         }
       }
 
-      alert(`${selectedTeam}チームの呼び出しを送信しました！`)
-    }
-  }
-
-    // Slackへの通知処理
-    const response = await fetch('/api/slack', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        team: selectedTeam, 
-        who: whoToCall, 
-        mention: mention, 
-        sender: submitter, 
-        content: callContent,
-        minutesUrl: TEAM_URLS[selectedTeam] 
-      }),
-    })
-
-    // Supabaseのステータス更新
-    if (response.ok) {
-      if (whoToCall === '全員') {
-        await supabase.from('patrol_members').update({ status: '対応不可' }).in('name', GROUPS.map(g => g.name))
-      } else {
-        await supabase.from('patrol_members').update({ status: '対応不可' }).eq('name', whoToCall)
-      }
       alert(`${selectedTeam}チームの呼び出しを送信しました！`)
     }
   }
@@ -240,7 +214,6 @@ export default function PatrolDashboard() {
           <div>
             <label className="text-sm font-bold mb-2 block ml-1">あなたのチーム名</label>
             <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="w-full bg-orange-400/50 border border-orange-300 rounded-2xl p-4 font-bold outline-none appearance-none">
-              {/* 🛠️ A～P までの 16 チームに拡張 */}
               {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'].map(t => (
                 <option key={t} value={t}>{t} チーム</option>
               ))}
